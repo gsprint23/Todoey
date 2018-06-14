@@ -10,7 +10,7 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
     
-    let itemArray = ["Find Mike", "Buy Eggos", "Destroy Demogorgon"]
+    var itemArray = ["Find Mike", "Buy Eggos", "Destroy Demogorgon"]
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -44,7 +44,7 @@ class TodoListViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         print(itemArray[indexPath.row], "clicked!")
         
-        var cell : UITableViewCell? = tableView.cellForRow(at: indexPath)
+        let cell : UITableViewCell? = tableView.cellForRow(at: indexPath)
         if cell?.accessoryType == .checkmark {
             cell?.accessoryType = .none
         }
@@ -56,6 +56,37 @@ class TodoListViewController: UITableViewController {
         
         
     }
+    
+    // MARK - add new items
+    @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
+        var textField = UITextField()
+        // show UIAlert with text field so user can add new item to list
+        let alert = UIAlertController(title: "Add New Todoey Item", message: "", preferredStyle: .alert)
+        // add text field to the alert
+        alert.addTextField { (alertTextField) in
+            alertTextField.placeholder = "Create new item"
+            // store reference to textfield in local var of addButtonPressed() so we can get the text from it
+            // later in the action handler
+            textField = alertTextField
+        }
+        
+        //button to press
+        let action = UIAlertAction(title: "Add Item", style: .default) { (action) in
+            print("Success")
+            print (textField.text!)
+            // an alternative way to do without the textField var
+            //print(alert.textFields![0].text!)
+            let text = textField.text!
+            // should add checking code so that the text
+            self.itemArray.append(text)
+            // force update of table view
+            self.tableView.reloadData()
+        }
+        
+        alert.addAction(action)
+        present(alert, animated: true, completion: nil)
+    }
+    
 
 }
 
