@@ -11,33 +11,21 @@ import UIKit
 class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
-    
-    let defaults = UserDefaults.standard
+     // file path to documents folder
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
 
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
+
+        // this is an array so grab first item
+        print(dataFilePath!)
         
         // since we inherit from UITableViewController, we don't need to set the data source or delegate
         // don't need to set up an IBOutlets
-    
-        let newItem = Item()
-        newItem.title = "Find Mike"
-        itemArray.append(newItem)
         
-        let newItem2 = Item()
-        newItem2.title = "Buy Eggos"
-        itemArray.append(newItem2)
-        
-        let newItem3 = Item()
-        newItem3.title = "Destroy"
-        itemArray.append(newItem3)
-        
-        // check to see if TodolistArray is in there
-//        if let items = defaults.array(forKey: "TodoListArray") as? [String] {
-//            itemArray = items
-//        }
-//
+        // load up Items.plist
+        loadData()
         
     }
 
@@ -73,6 +61,8 @@ class TodoListViewController: UITableViewController {
         //let cell : UITableViewCell? = tableView.cellForRow(at: indexPath)
         
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
+        self.saveData()
+        
         // forces tableView to call its datasource method again to reload data that is inside
         tableView.reloadData()
         
@@ -110,8 +100,16 @@ class TodoListViewController: UITableViewController {
             
             // add to persistent data storage
             // UserDefaults
-            self.defaults.set(self.itemArray, forKey: "TodoListArray")
-            
+            // trying to save array of custom Item objects
+            // UserDefaults is rejecting because of custom Item objects
+//            [User Defaults] Attempt to set a non-property-list object (
+//                "Todoey.Item",
+//                "Todoey.Item",
+//                "Todoey.Item",
+//                "Todoey.Item"
+//                ) as an NSUserDefaults/CFPreferences value for key TodoListArray
+            // need an alternative to store items
+            self.saveData()
         }
         
         alert.addAction(action)
@@ -119,5 +117,30 @@ class TodoListViewController: UITableViewController {
     }
     
 
+    func saveData() {
+        let encoder = PropertyListEncoder()
+        do {
+            let data = try encoder.encode(itemArray)
+            // generic parameter Value cannot be inferred, need to declare Item.swift to implement Encodable Protocol
+            try data.write(to : dataFilePath!)
+        } catch {
+            print("Error encoding item array, \(error)") // where is error defined?
+        }
+    }
+    
+    func loadData() {
+        // try? turns result into an optional
+        if let data = try? Data(contentsOf: dataFilePath!) {
+            let decoder = PropertyListDecoder()
+            do {
+                // [Item].self refers to the type of array of Item, not an object of type [Item]
+                // TODO: follow up on [Item].self
+                itemArray = try decoder.decode([Item].self, from: data)
+            }
+            catch {
+                print("Error decoding item array, \(error)")
+            }
+        }
+    }
 }
 

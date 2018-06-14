@@ -19,10 +19,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         // gets called when app gets loaded up, first thing that happens
         // happens before viewDidLoad() in initial ViewController
-        print("Did finish launching with options")
+        //print("Did finish launching with options")
         
         // get a path to data
-        print(NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last! as String)
+        //print(NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).last! as String)
         // /Users/sprint/Library/Developer/CoreSimulator/Devices/7EEE0D3A-96ED-4FC4-A940-4FDB3D7E44AE/data/Containers/Data/Application/F0ACD87D-3623-4F0B-B0B1-B2B885E7462F/Documents
         // the last UID is the app's sandbox (the directory that has documents)
         // go to /Library/Preferences and will see the the plist
