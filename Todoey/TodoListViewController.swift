@@ -10,7 +10,9 @@ import UIKit
 
 class TodoListViewController: UITableViewController {
     
-    var itemArray = ["Find Mike", "Buy Eggos", "Destroy Demogorgon"]
+    var itemArray = [String]()
+    
+    let defaults = UserDefaults.standard
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -18,6 +20,12 @@ class TodoListViewController: UITableViewController {
         
         // since we inherit from UITableViewController, we don't need to set the data source or delegate
         // don't need to set up an IBOutlets
+    
+        // check to see if TodolistArray is in there
+        if let items = defaults.array(forKey: "TodoListArray") as? [String] {
+            itemArray = items
+        }
+        
         
     }
 
@@ -81,6 +89,11 @@ class TodoListViewController: UITableViewController {
             self.itemArray.append(text)
             // force update of table view
             self.tableView.reloadData()
+            
+            // add to persistent data storage
+            // UserDefaults
+            self.defaults.set(self.itemArray, forKey: "TodoListArray")
+            
         }
         
         alert.addAction(action)
