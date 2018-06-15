@@ -13,6 +13,13 @@ class TodoListViewController: UITableViewController {
     
     var itemArray = [Item]()
     let context = (UIApplication.shared.delegate as! AppDelegate).persistentContainer.viewContext
+    var selectedCategory : Category? {
+        didSet{
+            // execute when selectedCategory gets set with a value
+            // pretty cool
+            loadData()
+        }
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -24,8 +31,6 @@ class TodoListViewController: UITableViewController {
         // since we inherit from UITableViewController, we don't need to set the data source or delegate
         // don't need to set up an IBOutlets
         
-        // load up Items.plist
-        loadData()
         
     }
 
@@ -34,7 +39,7 @@ class TodoListViewController: UITableViewController {
         // Dispose of any resources that can be recreated.
     }
 
-    //MARK Tableview Datasource Methods
+    //MARK: Tableview Datasource Methods
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         // there is a local and global tableView variable, refer to the same tableView can use either one
         print("In tableView cellForAt")
@@ -54,7 +59,7 @@ class TodoListViewController: UITableViewController {
         return itemArray.count
     }
     
-    // MARK - TableView delegate methods
+    // MARK: - TableView delegate methods
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         print(itemArray[indexPath.row], "clicked!")
         
@@ -74,7 +79,7 @@ class TodoListViewController: UITableViewController {
         
     }
     
-    // MARK - add new items
+    // MARK: - add new items
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         var textField = UITextField()
         // show UIAlert with text field so user can add new item to list
@@ -102,6 +107,7 @@ class TodoListViewController: UITableViewController {
             let newItem = Item(context: self.context)
             newItem.title = text
             newItem.done = false
+            newItem.parentCategory = self.selectedCategory
             self.itemArray.append(newItem)
             // force update of table view
             self.tableView.reloadData()
@@ -124,6 +130,7 @@ class TodoListViewController: UITableViewController {
         present(alert, animated: true, completion: nil)
     }
     
+    
 
     func saveData() {
         // commit context to permanent storage
@@ -134,15 +141,80 @@ class TodoListViewController: UITableViewController {
         }
     }
     
-    func loadData() {
+    // swift is pro natural language
+    // add external parameter to start with verb
+    // use default value!
+    func loadData(withRequest request : NSFetchRequest<Item> = Item.fetchRequest(), predicate : NSPredicate? = nil) {
         // few cases in swift when you need to specify a data type
         // specify entity you are trying to request
-        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        
+        let categoryPredicate = NSPredicate(format: "parentCategory.name MATCHES %@", selectedCategory!.name!)
+        
+        if let additionalPredicate = predicate {
+            print("Argument predicate is not nil")
+            request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [categoryPredicate, additionalPredicate])
+        }
+        else {
+            request.predicate = categoryPredicate
+        }
+        
         do {
+            // need to only fetch items that have parentCategory == selectedCategory
             itemArray = try context.fetch(request)
         }
         catch {
             print("Error fetching data from context \(error)")
+        }
+        
+        tableView.reloadData()
+    }
+}
+
+// can split up functionality of view controller into parts
+// not inheritance, just chopping/organizing of code
+// C of MVC gets really big, gigantic ViewControllers
+// MARK: - Search bar methods
+extension TodoListViewController : UISearchBarDelegate {
+    
+    func performSearch(searchBar : UISearchBar) {
+        print(searchBar.text!)
+        // want to update table view cells
+        // query DB
+        let request : NSFetchRequest<Item> = Item.fetchRequest()
+        // filter for query
+        // NSPredicate: foundation class for how data should be fetched or filtered
+        // where and regex combined, supposed to be like english
+        // %@ is a placeholder for args
+        let predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        
+        let sortDescriptor = NSSortDescriptor(key: "title", ascending: true)
+        request.sortDescriptors = [sortDescriptor]
+        // swift is pro natural language
+        loadData(withRequest: request, predicate: predicate)
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        performSearch(searchBar: searchBar)
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        let text = searchBar.text!
+        
+        if text.count == 0 {
+            // search bar is empty
+            // show whole list
+            loadData()
+            
+            // relinquish searchbars first reponser
+            // so search bar no longer has cursor and keyboard should go away
+            
+            //DispatchQueue manages queue of work items
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+            }
+        }
+        else {
+            performSearch(searchBar: searchBar)
         }
     }
 }
